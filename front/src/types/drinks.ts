@@ -18,6 +18,11 @@ export type IDrink = {
   updatedAt: string;
 };
 
+export type IDrinkForm = {
+  name: string;
+  description: string;
+};
+
 export type IReview = {
   id?: number;
   drinkId: number;

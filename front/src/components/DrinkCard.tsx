@@ -1,11 +1,19 @@
 "use client";
 
-import classNames from "classnames";
+import { MagnifyingGlassIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { IDrink } from "MyApp/types/drinks";
 import { useRouter } from "next/navigation";
 import ReviewStars from "./ReviewStars";
 
-export default function DrinkCard({ drink }: { drink: IDrink }) {
+export default function DrinkCard({
+  drink,
+  openModalForEdit,
+  handleDeleteDrink,
+}: {
+  drink: IDrink;
+  openModalForEdit: (drink: IDrink) => void;
+  handleDeleteDrink: (drinkId: number) => void;
+}) {
   const router = useRouter();
 
   const goDetail = () => {
@@ -21,17 +29,19 @@ export default function DrinkCard({ drink }: { drink: IDrink }) {
         </h5>
         <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">{drink.description}</p>
         <ReviewStars rating={Math.floor(drink.reviewAverageRating)} />
-        <div
-          onClick={goDetail}
-          className={classNames(
-            "cursor-pointer inline-flex items-center",
-            "px-3 py-2 mt-2",
-            "text-sm font-medium text-center text-white",
-            "bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300",
-            "dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-          )}
-        >
-          Read more
+        <div className="flex space-x-2 justify-end">
+          <button className="text-black-600 hover:text-black-800 transition" onClick={() => goDetail()}>
+            <MagnifyingGlassIcon width={20} height={20} />
+          </button>
+          <button className="text-black-600 hover:text-black-800 transition" onClick={() => openModalForEdit(drink)}>
+            <PencilSquareIcon width={20} height={20} />
+          </button>
+          <button
+            className="text-red-600 hover:text-red-800 transition"
+            onClick={() => handleDeleteDrink(drink.id || 0)}
+          >
+            <TrashIcon width={20} height={20} />
+          </button>
         </div>
       </div>
     </div>

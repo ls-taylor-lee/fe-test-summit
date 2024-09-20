@@ -26,15 +26,10 @@ export default function Reviews({ drinkId }: { drinkId: number }) {
   const [newReview, setNewReview] = useState({ ...InitialReviewFormData });
 
   const handleSaveReview = useCallback(() => {
-    const review = {
-      ...newReview,
-      id: currentReview ? currentReview.id : reviews.length + 1,
-    };
-
     if (isEditing) {
-      handleUpdateReview({ ...currentReview, drinkId, ...review });
+      handleUpdateReview({ ...currentReview, drinkId, ...newReview });
     } else {
-      handleAddReview(review);
+      handleAddReview(newReview);
     }
 
     closeModal();
