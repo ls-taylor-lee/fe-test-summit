@@ -1,12 +1,17 @@
 "use client";
 
 import { PlusCircleIcon } from "@heroicons/react/24/solid";
-import Modal from "MyApp/components/Modal";
-import ReviewForm from "MyApp/components/ReviewForm";
+import { FORM_MODE } from "MyApp/components/Form";
 import SingleReview from "MyApp/components/SingleReview";
+import { FormField, useModal } from "MyApp/contexts/ModalContext";
 import { useReviews } from "MyApp/hooks/useReviews";
 import { IReview, IReviewForm } from "MyApp/types/drinks";
-import { useCallback, useState } from "react";
+
+const formFields: FormField[] = [
+  { name: "user_name", label: "User Name", component: "input", type: "text" },
+  { name: "rating", label: "Rating", component: "star-rating" },
+  { name: "description", label: "Description", component: "textarea", type: "text" },
+];
 
 const InitialReviewFormData: IReviewForm = {
   user_name: "",
@@ -20,48 +25,23 @@ export default function Reviews({ drinkId }: { drinkId: number }) {
     length: 10,
   });
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentReview, setCurrentReview] = useState<IReview | null>(null);
-  const [newReview, setNewReview] = useState({ ...InitialReviewFormData });
+  const { openModal } = useModal();
 
-  const handleSaveReview = useCallback(() => {
-    if (isEditing) {
-      handleUpdateReview({ ...currentReview, drinkId, ...newReview });
-    } else {
-      handleAddReview(newReview);
-    }
-
-    closeModal();
-  }, [currentReview, newReview]);
-
-  const openModalForAdd = () => {
-    setNewReview({ ...InitialReviewFormData });
-    setIsEditing(false);
-    setCurrentReview(null);
-    setIsModalOpen(true);
-  };
-
-  const openModalForEdit = (review: IReview) => {
-    setNewReview(review);
-    setIsEditing(true);
-    setCurrentReview(review);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => setIsModalOpen(false);
-
-  const handleAddReview = (newReview: IReviewForm) => {
-    addReview({
-      newReview: {
-        drinkId,
-        ...newReview,
-      },
+  const handleCreate = () => {
+    openModal(formFields, FORM_MODE.CREATE, { ...InitialReviewFormData }, "Add Review", (data) => {
+      addReview({
+        newReview: {
+          drinkId,
+          ...data,
+        },
+      });
     });
   };
 
-  const handleUpdateReview = (newReview: IReview) => {
-    updateReview({ reviewId: newReview.id || 0, updatedReview: newReview });
+  const handleEdit = (prevData: IReview) => {
+    openModal(formFields, FORM_MODE.EDIT, { ...prevData }, "Edit Review", (data) => {
+      updateReview({ reviewId: prevData.id || 0, updatedReview: { ...prevData, ...data } });
+    });
   };
 
   const handleReviewDelete = (reviewId: number) => {
@@ -77,7 +57,7 @@ export default function Reviews({ drinkId }: { drinkId: number }) {
         <h2 className="text-2xl font-semibold">Reviews</h2>
 
         {/* Button to open Add Review modal */}
-        <button className="text-black dark:text-white px-4 py-2 rounded" onClick={() => openModalForAdd()}>
+        <button className="text-black dark:text-white px-4 py-2 rounded" onClick={() => handleCreate()}>
           <PlusCircleIcon width={24} height={24} />
         </button>
       </div>
@@ -88,7 +68,7 @@ export default function Reviews({ drinkId }: { drinkId: number }) {
             <SingleReview
               key={review.id}
               review={review}
-              openModalForEdit={openModalForEdit}
+              openModalForEdit={() => handleEdit({ ...review })}
               handleReviewDelete={handleReviewDelete}
             />
           ))}
@@ -96,15 +76,6 @@ export default function Reviews({ drinkId }: { drinkId: number }) {
       ) : (
         <p>No reviews yet. Be the first to review!</p>
       )}
-
-      <Modal isOpen={isModalOpen} onClose={closeModal}>
-        <ReviewForm
-          newReview={newReview}
-          setNewReview={setNewReview}
-          handleSaveReview={handleSaveReview}
-          isEditing={isEditing}
-        />
-      </Modal>
     </section>
   );
 }

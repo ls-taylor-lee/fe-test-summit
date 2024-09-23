@@ -2,11 +2,16 @@
 
 import { PlusCircleIcon } from "@heroicons/react/24/solid";
 import DrinkCard from "MyApp/components/DrinkCard";
-import DrinkForm from "MyApp/components/DrinkForm";
-import Modal from "MyApp/components/Modal";
+import { FORM_MODE } from "MyApp/components/Form";
+import { FormField, useModal } from "MyApp/contexts/ModalContext";
 import { useDrinks } from "MyApp/hooks/useDrinks";
 import { IDrink, IDrinkForm } from "MyApp/types/drinks";
-import { useCallback, useState } from "react";
+import { useEffect, useState } from "react";
+
+const formFields: FormField[] = [
+  { name: "name", label: "Name", component: "input", type: "text" },
+  { name: "description", label: "Description", component: "textarea", type: "text" },
+];
 
 const InitialDrinkFormData: IDrinkForm = {
   name: "",
@@ -14,48 +19,45 @@ const InitialDrinkFormData: IDrinkForm = {
 };
 
 export default function Home() {
-  const { drinks, error, isLoading, addDrink, updateDrink, deleteDrink } = useDrinks({ offset: 0, length: 10 });
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentDrink, setCurrentDrink] = useState<IDrink | null>(null);
-  const [newDrink, setNewDrink] = useState<IDrinkForm>({ ...InitialDrinkFormData });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+  const { drinks, error, isLoading, addDrink, updateDrink, deleteDrink } = useDrinks({
+    offset: 0,
+    length: 10,
+    searchTerm: debouncedSearchTerm,
+  });
 
-  const closeModal = () => setIsModalOpen(false);
+  const { openModal } = useModal();
 
-  const handleSaveDrink = useCallback(() => {
-    if (isEditing && currentDrink) {
-      handleUpdateDrink({ ...currentDrink, ...newDrink });
-    } else {
-      handleAddDrink(newDrink);
-    }
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 1000); // 1 seconds debounce
 
-    closeModal();
-  }, [currentDrink, newDrink]);
+    return () => {
+      clearTimeout(handler); // Cleanup the timeout on unmount or when searchTerm changes
+    };
+  }, [searchTerm]);
 
-  const openModalForAdd = () => {
-    setNewDrink({ ...InitialDrinkFormData });
-    setIsEditing(false);
-    setCurrentDrink(null);
-    setIsModalOpen(true);
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
   };
 
-  const openModalForEdit = (drink: IDrink) => {
-    setNewDrink(drink);
-    setIsEditing(true);
-    setCurrentDrink(drink);
-    setIsModalOpen(true);
-  };
-
-  const handleAddDrink = (newDrink: IDrinkForm) => {
-    addDrink({
-      newDrink,
+  const handleCreate = () => {
+    openModal(formFields, FORM_MODE.CREATE, { ...InitialDrinkFormData }, "Add Drink", (data) => {
+      addDrink({
+        newDrink: data,
+      });
     });
   };
-  const handleUpdateDrink = (newDrink: IDrink) => {
-    updateDrink({ drink: newDrink });
+
+  const handleEdit = (prevData: IDrink) => {
+    openModal(formFields, FORM_MODE.EDIT, { ...prevData }, "Edit Drink", (data) => {
+      updateDrink({ drink: { ...prevData, ...data } });
+    });
   };
 
-  const handleDeleteDrink = (drinkId: number) => {
+  const handleDelete = (drinkId: number) => {
     deleteDrink({ drinkId });
   };
 
@@ -65,10 +67,18 @@ export default function Home() {
     <div className="p-4 min-h-screen">
       <div className="flex mb-4 items-center">
         <h1 className="text-2xl font-bold">All Drinks</h1>
-        <button className="text-black dark:text-white px-4 py-2 rounded" onClick={() => openModalForAdd()}>
+        <button className="text-black dark:text-white px-4 py-2 rounded" onClick={() => handleCreate()}>
           <PlusCircleIcon width={24} height={24} />
         </button>
       </div>
+      <input
+        type="text"
+        placeholder="Search for a drink..."
+        value={searchTerm}
+        onChange={handleSearch}
+        className="border p-2 mb-4 w-full bg-white dark:bg-black"
+      />
+
       {isLoading ? (
         <div>Loading ...</div>
       ) : (
@@ -78,22 +88,13 @@ export default function Home() {
               <DrinkCard
                 key={v.id}
                 drink={v}
-                openModalForEdit={openModalForEdit}
-                handleDeleteDrink={handleDeleteDrink}
+                openModalForEdit={() => handleEdit({ ...v })}
+                handleDeleteDrink={handleDelete}
               />
             );
           })}
         </div>
       )}
-
-      <Modal isOpen={isModalOpen} onClose={closeModal}>
-        <DrinkForm
-          newDrink={newDrink}
-          setNewDrink={setNewDrink}
-          handleSaveDrink={handleSaveDrink}
-          isEditing={isEditing}
-        />
-      </Modal>
     </div>
   );
 }

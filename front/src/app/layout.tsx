@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import ThemeToggleButton from "MyApp/components/ThemeToggleButton";
+import { ModalProvider } from "MyApp/contexts/ModalContext";
 import DarkModeProvider from "MyApp/lib/dark-mode-provider";
 import { ReactQueryProvider } from "MyApp/lib/react-query-provider";
 import { Flip, ToastContainer } from "react-toastify";
@@ -22,10 +23,12 @@ export default function RootLayout({
       <body>
         <ReactQueryProvider>
           <DarkModeProvider>
-            <div className="h-full overflow-y-auto text-black dark:text-white">
-              {children}
-              <ThemeToggleButton />
-              <ToastContainer autoClose={1000} transition={Flip} theme={"colored"} />
+            <div className="h-full min-h-screen overflow-y-auto text-black dark:text-white">
+              <ModalProvider>
+                {children}
+                <ThemeToggleButton />
+                <ToastContainer autoClose={1000} transition={Flip} theme={"colored"} />
+              </ModalProvider>
             </div>
           </DarkModeProvider>
         </ReactQueryProvider>

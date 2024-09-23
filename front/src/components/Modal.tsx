@@ -1,13 +1,15 @@
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import { ReactNode, useEffect, useRef } from "react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import { useModal } from "MyApp/contexts/ModalContext";
+import React, { useEffect, useRef } from "react";
 
 interface ModalProps {
-  isOpen: boolean;
   onClose: () => void;
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
-const Modal = ({ isOpen, onClose, children }: ModalProps) => {
+const Modal: React.FC<ModalProps> = ({ onClose, children }) => {
+  const { isOpen } = useModal();
+
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,9 +28,6 @@ const Modal = ({ isOpen, onClose, children }: ModalProps) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 z-50 overflow-auto bg-black dark:bg-white bg-opacity-30 dark:bg-opacity-10 flex">
       <div

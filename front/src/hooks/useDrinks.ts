@@ -4,9 +4,19 @@ import { IDrink, IDrinkForm } from "MyApp/types/drinks";
 import { toast } from "react-toastify";
 
 // Fetch drinks
-const fetchDrinks = async ({ offset, length }: { offset: number; length: number }) => {
+const fetchDrinks = async ({
+  offset,
+  length,
+  searchTerm = "",
+}: {
+  offset: number;
+  length: number;
+  searchTerm?: string;
+}) => {
   try {
-    const res = await apiClient.get("/api/drinks", { params: { offset, length } });
+    const res = await apiClient.get("/api/drinks", {
+      params: { offset, length, name: searchTerm, description: searchTerm },
+    });
     return res.data;
   } catch (error) {
     throw new Error("Error fetching drinks");
@@ -42,7 +52,15 @@ const deleteDrink = async (drinkId: number) => {
 };
 
 // Custom hook for managing drinks
-export const useDrinks = ({ offset = 0, length = 10 }: { offset: number; length: number }) => {
+export const useDrinks = ({
+  offset = 0,
+  length = 10,
+  searchTerm = "",
+}: {
+  offset: number;
+  length: number;
+  searchTerm?: string;
+}) => {
   const queryClient = useQueryClient();
 
   // Fetch drinks using useQuery
@@ -50,7 +68,7 @@ export const useDrinks = ({ offset = 0, length = 10 }: { offset: number; length:
     data: drinks,
     error,
     isLoading,
-  } = useQuery({ queryKey: ["drinks"], queryFn: () => fetchDrinks({ offset, length }) });
+  } = useQuery({ queryKey: ["drinks", searchTerm], queryFn: () => fetchDrinks({ offset, length, searchTerm }) });
 
   // Add a new drink using useMutation
   const addMutation = useMutation({

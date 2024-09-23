@@ -9,17 +9,19 @@ router.get("/drinks", async (req: Request, res: Response) => {
     const offset = Number(req.query["offset"]);
     const length = Number(req.query["length"]);
 
-    const where: sequelize.WhereOptions = {};
+    const opOr = [];
 
+    const whereCondition = {};
     const name = req.query["name"];
-    if (name) {
-      where.name = { [Op.like]: `%${name}%` };
+    if (name && name !== "") {
+      opOr.push({ name: { [Op.like]: `%${name}%` } });
     }
 
     const description = req.query["description"];
-    if (description) {
-      where.description = { [Op.like]: `%${description}%` };
+    if (description && description !== "") {
+      opOr.push({ description: { [Op.like]: `%${description}%` } });
     }
+    const where: sequelize.WhereOptions = name !== "" || description !== "" ? { [Op.or]: opOr } : {};
 
     const minRating = Number(req.query["minRating"]);
     const maxRating = Number(req.query["maxRating"]);
